@@ -1,7 +1,7 @@
 import streamlit as st
 import webbrowser
 from collections import Counter
-import urllib.parse
+ 
 
 # Initialize cart in session
 if "cart" not in st.session_state:
@@ -130,95 +130,95 @@ elif page == "🍔 Menu":
 
 
 elif page == "🛒 Cart":
-    st.header("🛒 Your Cart")
-    total = 0
-
-    if st.session_state.cart:
-        cart_counter = Counter([item['name'] for item in st.session_state.cart])
-        unique_items = {item['name']: item for item in st.session_state.cart}
+        st.header("🛒 Your Cart")
         total = 0
 
-        for idx, (item_name, qty) in enumerate(cart_counter.items()):
-            item = unique_items[item_name]
-            item_total = item['price'] * qty
+        if st.session_state.cart:
+            cart_counter = Counter([item['name'] for item in st.session_state.cart])
+            unique_items = {item['name']: item for item in st.session_state.cart}
+            total = 0
 
-           
-            st.write(f"**{item_name}** — Rs. {item['price']} × {qty} = Rs. {item_total}")
-            btn_cols = st.columns([1, 1, 1, 1])
-            with btn_cols[0]:
-                if st.button("➖", key=f"dec_{idx}"):
-                    for i, it in enumerate(st.session_state.cart):
-                        if it['name'] == item_name:
-                            st.session_state.cart.pop(i)
-                            break  
-                    st.rerun()
-            with btn_cols[1]:
-                if st.button("➕", key=f"inc_{idx}"):
-                    st.session_state.cart.append(item)
-                    st.rerun()
-            with btn_cols[2]:
-                if st.button("🗑️", key=f"del_{idx}"):
-                    st.session_state.cart = [it for it in st.session_state.cart if it['name'] != item_name]
-                    st.rerun()
-            with btn_cols[3]:
-                st.write(f"Qty: {qty}")
+            for idx, (item_name, qty) in enumerate(cart_counter.items()):
+                item = unique_items[item_name]
+                item_total = item['price'] * qty
+
+            
+                st.write(f"**{item_name}** — Rs. {item['price']} × {qty} = Rs. {item_total}")
+                btn_cols = st.columns([1, 1, 1, 1])
+                with btn_cols[0]:
+                    if st.button("➖", key=f"dec_{idx}"):
+                        for i, it in enumerate(st.session_state.cart):
+                            if it['name'] == item_name:
+                                st.session_state.cart.pop(i)
+                                break  
+                        st.rerun()
+                with btn_cols[1]:
+                    if st.button("➕", key=f"inc_{idx}"):
+                        st.session_state.cart.append(item)
+                        st.rerun()
+                with btn_cols[2]:
+                    if st.button("🗑️", key=f"del_{idx}"):
+                        st.session_state.cart = [it for it in st.session_state.cart if it['name'] != item_name]
+                        st.rerun()
+                with btn_cols[3]:
+                    st.write(f"Qty: {qty}")
+                st.markdown("---")
+
+                total += item_total
+
+            st.markdown(f"### 🧾 Total Bill: Rs. {total}")
             st.markdown("---")
 
-            total += item_total
-
-        st.markdown(f"### 🧾 Total Bill: Rs. {total}")
-        st.markdown("---")
-
 with st.form("order_form"):
-    st.markdown("### 🛒 Complete Your Order")
-    
-    name = st.text_input("👤 Your Name", max_chars=50)
-    phone = st.text_input("📱 WhatsApp Number", placeholder="e.g., 923001234567", max_chars=15)
-    extra_msg = st.text_area("💬 Extra Instructions (optional)", placeholder="e.g., No onions, extra ketchup, etc.")
-    
-    submitted = st.form_submit_button("📤 Submit Order to WhatsApp")
+        st.markdown("### 🛒 Complete Your Order")
+        
+        name = st.text_input("👤 Your Name", max_chars=50)
+        phone = st.text_input("📱 WhatsApp Number", placeholder="e.g., 923001234567", max_chars=15)
+        extra_msg = st.text_area("💬 Extra Instructions (optional)", placeholder="e.g., No onions, extra ketchup, etc.")
+        
+        submitted = st.form_submit_button("📤 Submit Order to WhatsApp")
 
-    if submitted:
-        name = name.strip()
-        phone = phone.strip()
-        extra_msg = extra_msg.strip()
+        if submitted:
+            name = name.strip()
+            phone = phone.strip()
+            extra_msg = extra_msg.strip()
 
-        # --- Validation Check ---
-        if not name or not phone:
-            st.error("⚠️ Please enter both your name and WhatsApp number.")
-        elif not phone.isdigit() or not phone.startswith("92") or len(phone) < 11:
-            st.error("⚠️ Please enter a valid WhatsApp number starting with 92 (e.g., 923001234567).")
-        elif not cart_counter:
-            st.error("🛒 Your cart is empty. Please add items before placing an order.")
-        else:
-            # --- Construct Order Summary ---
-            order_lines = [f"*Order Summary:*"]
-            total_amount = 0
+            # --- Validation Check ---
+            if not name or not phone:
+                st.error("⚠️ Please enter both your name and WhatsApp number.")
+            elif not phone.isdigit() or not phone.startswith("92") or len(phone) < 11:
+                st.error("⚠️ Please enter a valid WhatsApp number starting with 92 (e.g., 923001234567).")
+            elif not cart_counter:
+                st.error("🛒 Your cart is empty. Please add items before placing an order.")
+            else:
+                # --- Construct Order Summary ---
+                order_lines = [f"*Order Summary:*"]
+                total_amount = 0
 
-            for item_name, qty in cart_counter.items():
-                item = unique_items[item_name]
-                price = item["price"] * qty
-                total_amount += price
-                order_lines.append(f"- {item_name} × {qty} = Rs. {price}")
+                for item_name, qty in cart_counter.items():
+                    item = unique_items[item_name]
+                    price = item["price"] * qty
+                    total_amount += price
+                    order_lines.append(f"- {item_name} × {qty} = Rs. {price}")
 
-            order_lines.append(f"\n*Total:* Rs. {total_amount}")
-            order_lines.append(f"*Customer:* {name}")
-            order_lines.append(f"*Contact:* {phone}")
+                order_lines.append(f"\n*Total:* Rs. {total_amount}")
+                order_lines.append(f"*Customer:* {name}")
+                order_lines.append(f"*Contact:* {phone}")
 
-            if extra_msg:
-                order_lines.append(f"*Instructions:* {extra_msg}")
+                if extra_msg:
+                    order_lines.append(f"*Instructions:* {extra_msg}")
 
-            final_msg = "\n".join(order_lines)
+                final_msg = "\n".join(order_lines)
 
-            # --- Format for WhatsApp URL ---
-            encoded_msg = final_msg.replace(" ", "%20").replace("\n", "%0A")
-            wa_url = f"https://wa.me/{phone}?text={encoded_msg}"
+                # --- Format for WhatsApp URL ---
+                encoded_msg = final_msg.replace(" ", "%20").replace("\n", "%0A")
+                wa_url = f"https://wa.me/923133850871?text={encoded_msg}"
 
-            webbrowser.open_new_tab(wa_url)
-            st.success("✅ Your order has been sent to WhatsApp successfully!")
-
-    else:
-        st.warning("🛒 Your cart is empty. Please add items from the menu.")
+                webbrowser.open_new_tab(wa_url)
+                st.success("✅ Your order has been sent to WhatsApp successfully!")
+        # Show warning only if cart is empty and form is not submitted
+        if not st.session_state.cart:
+            st.warning("🛒 Your cart is empty. Please add items from the menu.")
 
 
 
