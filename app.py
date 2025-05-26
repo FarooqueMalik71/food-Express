@@ -1,6 +1,7 @@
 import streamlit as st
 import webbrowser
 from collections import Counter
+import urllib.parse
 
 # Initialize cart in session
 if "cart" not in st.session_state:
@@ -168,26 +169,53 @@ elif page == "🛒 Cart":
         st.markdown(f"### 🧾 Total Bill: Rs. {total}")
         st.markdown("---")
 
-        with st.form("order_form"):
-            name = st.text_input("👤 Your Name")
-            phone = st.text_input("📱 WhatsApp Number (e.g., 923001234567)")
-            extra_msg = st.text_area("💬 Extra Instructions (optional)", placeholder="e.g., No onions, extra ketchup, etc.")
+with st.form("order_form"):
+    st.markdown("### 🛒 Complete Your Order")
+    
+    name = st.text_input("👤 Your Name", max_chars=50)
+    phone = st.text_input("📱 WhatsApp Number", placeholder="e.g., 923001234567", max_chars=15)
+    extra_msg = st.text_area("💬 Extra Instructions (optional)", placeholder="e.g., No onions, extra ketchup, etc.")
+    
+    submitted = st.form_submit_button("📤 Submit Order to WhatsApp")
 
-            if st.form_submit_button("📤 Submit Order to WhatsApp"):
-                if not name.strip() or not phone.strip():
-                    st.error("Please enter your name and WhatsApp number to submit the order.")
-                else:
-                    message = "*Order Summary:*\n"
-                    for item_name, qty in cart_counter.items():
-                        item = unique_items[item_name]
-                        message += f"- {item_name} × {qty} = Rs. {item['price'] * qty}\n"
-                    message += f"\n*Total:* Rs. {total}\n*Customer:* {name}\n*Contact:* {phone}"
-                    if extra_msg.strip():
-                        message += f"\n*Instructions:* {extra_msg.strip()}"
-                    wa_url = f"https://wa.me/{phone}?text={message.replace(' ', '%20').replace('\n', '%0A')}"
-                    webbrowser.open_new_tab(wa_url)
-                    st.success("✅ Order sent to WhatsApp successfully!")
-          
+    if submitted:
+        name = name.strip()
+        phone = phone.strip()
+        extra_msg = extra_msg.strip()
+
+        # --- Validation Check ---
+        if not name or not phone:
+            st.error("⚠️ Please enter both your name and WhatsApp number.")
+        elif not phone.isdigit() or not phone.startswith("92") or len(phone) < 11:
+            st.error("⚠️ Please enter a valid WhatsApp number starting with 92 (e.g., 923001234567).")
+        elif not cart_counter:
+            st.error("🛒 Your cart is empty. Please add items before placing an order.")
+        else:
+            # --- Construct Order Summary ---
+            order_lines = [f"*Order Summary:*"]
+            total_amount = 0
+
+            for item_name, qty in cart_counter.items():
+                item = unique_items[item_name]
+                price = item["price"] * qty
+                total_amount += price
+                order_lines.append(f"- {item_name} × {qty} = Rs. {price}")
+
+            order_lines.append(f"\n*Total:* Rs. {total_amount}")
+            order_lines.append(f"*Customer:* {name}")
+            order_lines.append(f"*Contact:* {phone}")
+
+            if extra_msg:
+                order_lines.append(f"*Instructions:* {extra_msg}")
+
+            final_msg = "\n".join(order_lines)
+
+            # --- Format for WhatsApp URL ---
+            encoded_msg = final_msg.replace(" ", "%20").replace("\n", "%0A")
+            wa_url = f"https://wa.me/{phone}?text={encoded_msg}"
+
+            webbrowser.open_new_tab(wa_url)
+            st.success("✅ Your order has been sent to WhatsApp successfully!")
 
     else:
         st.warning("🛒 Your cart is empty. Please add items from the menu.")
