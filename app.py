@@ -128,9 +128,8 @@ elif page == "🍔 Menu":
     
 # 🛒 Cart Page
 
-
 elif page == "🛒 Cart":
-        st.header("🛒 Your Cart")
+    st.header("🛒 Your Cart")
         total = 0
 
         if st.session_state.cart:
